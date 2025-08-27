@@ -3,6 +3,7 @@ package ezutil
 // todo move to go-crud pkg
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/itsLeonB/ezutil"
@@ -51,6 +52,13 @@ func OrderBy(field string, ascending bool) func(db *gorm.DB) *gorm.DB {
 // Non-zero fields in spec will be used as AND conditions in the query.
 func WhereBySpec[T any](spec T) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
+		v := reflect.ValueOf(spec)
+		if v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				return db // nothing to filter
+			}
+			return db.Where(spec)
+		}
 		return db.Where(&spec)
 	}
 }
