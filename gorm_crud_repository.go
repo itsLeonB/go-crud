@@ -41,6 +41,10 @@ type Specification[T any] struct {
 // NewCRUDRepository creates a new CRUD repository implementation using GORM.
 // The repository provides transaction-aware database operations for the specified entity type T.
 func NewCRUDRepository[T any](db *gorm.DB) CRUDRepository[T] {
+	var zero T
+	if reflect.TypeOf(zero).Kind() == reflect.Ptr {
+		panic("CRUDRepository does not support pointer types for T")
+	}
 	return &crudRepositoryGorm[T]{db}
 }
 
