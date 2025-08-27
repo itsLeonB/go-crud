@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	ezutil "github.com/itsLeonB/go-crud"
+	crud "github.com/itsLeonB/go-crud"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -26,14 +26,14 @@ func setupTransactorTestDB(t *testing.T) *gorm.DB {
 
 func TestNewTransactor(t *testing.T) {
 	db := setupTransactorTestDB(t)
-	transactor := ezutil.NewTransactor(db)
+	transactor := crud.NewTransactor(db)
 
 	assert.NotNil(t, transactor, "NewTransactor should not return nil")
 }
 
 func TestTransactor_Begin(t *testing.T) {
 	db := setupTransactorTestDB(t)
-	transactor := ezutil.NewTransactor(db)
+	transactor := crud.NewTransactor(db)
 	ctx := context.Background()
 
 	txCtx, err := transactor.Begin(ctx)
@@ -41,14 +41,14 @@ func TestTransactor_Begin(t *testing.T) {
 	assert.NotNil(t, txCtx, "Begin should not return nil context")
 
 	// Verify transaction is in context
-	tx, err := ezutil.GetTxFromContext(txCtx)
+	tx, err := crud.GetTxFromContext(txCtx)
 	assert.NoError(t, err, "GetTxFromContext should not return error")
 	assert.NotNil(t, tx, "Begin should store transaction in context")
 }
 
 func TestTransactor_Commit(t *testing.T) {
 	db := setupTransactorTestDB(t)
-	transactor := ezutil.NewTransactor(db)
+	transactor := crud.NewTransactor(db)
 	ctx := context.Background()
 
 	t.Run("successful commit", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestTransactor_Commit(t *testing.T) {
 
 func TestTransactor_Rollback(t *testing.T) {
 	db := setupTransactorTestDB(t)
-	transactor := ezutil.NewTransactor(db)
+	transactor := crud.NewTransactor(db)
 	ctx := context.Background()
 
 	t.Run("successful rollback", func(t *testing.T) {
@@ -90,8 +90,8 @@ func TestTransactor_Rollback(t *testing.T) {
 
 func TestTransactor_WithinTransaction_Success(t *testing.T) {
 	db := setupTransactorTestDB(t)
-	transactor := ezutil.NewTransactor(db)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	transactor := crud.NewTransactor(db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	var insertedID uint
@@ -115,7 +115,7 @@ func TestTransactor_WithinTransaction_Success(t *testing.T) {
 	assert.NoError(t, err, "WithinTransaction should not return error")
 
 	// Verify the record was committed
-	spec := ezutil.Specification[TestModel]{
+	spec := crud.Specification[TestModel]{
 		Model: TestModel{ID: insertedID},
 	}
 	result, err := repo.FindFirst(ctx, spec)
@@ -126,8 +126,8 @@ func TestTransactor_WithinTransaction_Success(t *testing.T) {
 
 func TestTransactor_WithinTransaction_Rollback(t *testing.T) {
 	db := setupTransactorTestDB(t)
-	transactor := ezutil.NewTransactor(db)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	transactor := crud.NewTransactor(db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	var insertedID uint
@@ -153,7 +153,7 @@ func TestTransactor_WithinTransaction_Rollback(t *testing.T) {
 	assert.Equal(t, expectedError, err, "WithinTransaction should return the expected error")
 
 	// Verify the record was rolled back
-	spec := ezutil.Specification[TestModel]{
+	spec := crud.Specification[TestModel]{
 		Model: TestModel{ID: insertedID},
 	}
 	result, err := repo.FindFirst(ctx, spec)
@@ -163,8 +163,8 @@ func TestTransactor_WithinTransaction_Rollback(t *testing.T) {
 
 func TestTransactor_WithinTransaction_Nested(t *testing.T) {
 	db := setupTransactorTestDB(t)
-	transactor := ezutil.NewTransactor(db)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	transactor := crud.NewTransactor(db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	var outerID, innerID uint
@@ -203,14 +203,14 @@ func TestTransactor_WithinTransaction_Nested(t *testing.T) {
 	assert.NoError(t, err, "WithinTransaction nested should not return error")
 
 	// Verify both records were committed
-	outerSpec := ezutil.Specification[TestModel]{
+	outerSpec := crud.Specification[TestModel]{
 		Model: TestModel{ID: outerID},
 	}
 	outerResult, err := repo.FindFirst(ctx, outerSpec)
 	assert.NoError(t, err, "Error verifying outer record")
 	assert.NotZero(t, outerResult.ID, "WithinTransaction outer record should be committed")
 
-	innerSpec := ezutil.Specification[TestModel]{
+	innerSpec := crud.Specification[TestModel]{
 		Model: TestModel{ID: innerID},
 	}
 	innerResult, err := repo.FindFirst(ctx, innerSpec)
@@ -220,20 +220,20 @@ func TestTransactor_WithinTransaction_Nested(t *testing.T) {
 
 func TestGetTxFromContext(t *testing.T) {
 	db := setupTransactorTestDB(t)
-	transactor := ezutil.NewTransactor(db)
+	transactor := crud.NewTransactor(db)
 	ctx := context.Background()
 
 	t.Run("context with transaction", func(t *testing.T) {
 		txCtx, err := transactor.Begin(ctx)
 		assert.NoError(t, err, "Failed to begin transaction")
 
-		tx, err := ezutil.GetTxFromContext(txCtx)
+		tx, err := crud.GetTxFromContext(txCtx)
 		assert.NoError(t, err, "GetTxFromContext should not return error")
 		assert.NotNil(t, tx, "GetTxFromContext should return transaction")
 	})
 
 	t.Run("context without transaction", func(t *testing.T) {
-		tx, err := ezutil.GetTxFromContext(ctx)
+		tx, err := crud.GetTxFromContext(ctx)
 		assert.NoError(t, err, "GetTxFromContext should not return error")
 		assert.Nil(t, tx, "GetTxFromContext should return nil when no transaction")
 	})

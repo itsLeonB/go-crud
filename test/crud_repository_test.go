@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	ezutil "github.com/itsLeonB/go-crud"
+	crud "github.com/itsLeonB/go-crud"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -36,14 +36,14 @@ func setupTestDB(t *testing.T) *gorm.DB {
 
 func TestNewCRUDRepository(t *testing.T) {
 	db := setupTestDB(t)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 
 	assert.NotNil(t, repo, "NewCRUDRepository should not return nil")
 }
 
 func TestCRUDRepository_Insert(t *testing.T) {
 	db := setupTestDB(t)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	t.Run("successful insert", func(t *testing.T) {
@@ -70,7 +70,7 @@ func TestCRUDRepository_Insert(t *testing.T) {
 
 func TestCRUDRepository_FindAll(t *testing.T) {
 	db := setupTestDB(t)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	// Insert test data
@@ -86,13 +86,13 @@ func TestCRUDRepository_FindAll(t *testing.T) {
 	}
 
 	t.Run("find all records", func(t *testing.T) {
-		results, err := repo.FindAll(ctx, ezutil.Specification[TestModel]{})
+		results, err := repo.FindAll(ctx, crud.Specification[TestModel]{})
 		assert.NoError(t, err, "FindAll should not return error")
 		assert.Len(t, results, 3, "FindAll should return all 3 records")
 	})
 
 	t.Run("find by name", func(t *testing.T) {
-		spec := ezutil.Specification[TestModel]{
+		spec := crud.Specification[TestModel]{
 			Model: TestModel{Name: "Alice"},
 		}
 		results, err := repo.FindAll(ctx, spec)
@@ -104,7 +104,7 @@ func TestCRUDRepository_FindAll(t *testing.T) {
 
 func TestCRUDRepository_FindFirst(t *testing.T) {
 	db := setupTestDB(t)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	testModel := TestModel{Name: "Alice", Email: "alice@example.com", Age: 25}
@@ -112,7 +112,7 @@ func TestCRUDRepository_FindFirst(t *testing.T) {
 	assert.NoError(t, err, "Failed to insert test data")
 
 	t.Run("find existing record", func(t *testing.T) {
-		spec := ezutil.Specification[TestModel]{
+		spec := crud.Specification[TestModel]{
 			Model: TestModel{Name: "Alice"},
 		}
 		result, err := repo.FindFirst(ctx, spec)
@@ -122,7 +122,7 @@ func TestCRUDRepository_FindFirst(t *testing.T) {
 	})
 
 	t.Run("find non-existent record", func(t *testing.T) {
-		spec := ezutil.Specification[TestModel]{
+		spec := crud.Specification[TestModel]{
 			Model: TestModel{Name: "NonExistent"},
 		}
 		result, err := repo.FindFirst(ctx, spec)
@@ -133,7 +133,7 @@ func TestCRUDRepository_FindFirst(t *testing.T) {
 
 func TestCRUDRepository_Update(t *testing.T) {
 	db := setupTestDB(t)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	testModel := TestModel{Name: "Alice", Email: "alice@example.com", Age: 25}
@@ -164,7 +164,7 @@ func TestCRUDRepository_Update(t *testing.T) {
 
 func TestCRUDRepository_Delete(t *testing.T) {
 	db := setupTestDB(t)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	testModel := TestModel{Name: "Alice", Email: "alice@example.com", Age: 25}
@@ -176,7 +176,7 @@ func TestCRUDRepository_Delete(t *testing.T) {
 		assert.NoError(t, err, "Delete should not return error")
 
 		// Verify record is deleted
-		result, err := repo.FindFirst(ctx, ezutil.Specification[TestModel]{
+		result, err := repo.FindFirst(ctx, crud.Specification[TestModel]{
 			Model: TestModel{ID: inserted.ID},
 		})
 		assert.NoError(t, err, "Error verifying deletion")
@@ -192,7 +192,7 @@ func TestCRUDRepository_Delete(t *testing.T) {
 
 func TestCRUDRepository_BatchInsert(t *testing.T) {
 	db := setupTestDB(t)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	t.Run("successful batch insert", func(t *testing.T) {
@@ -223,7 +223,7 @@ func TestCRUDRepository_BatchInsert(t *testing.T) {
 
 func TestCRUDRepository_GetGormInstance(t *testing.T) {
 	db := setupTestDB(t)
-	repo := ezutil.NewCRUDRepository[TestModel](db)
+	repo := crud.NewCRUDRepository[TestModel](db)
 	ctx := context.Background()
 
 	instance, err := repo.GetGormInstance(ctx)
@@ -232,7 +232,7 @@ func TestCRUDRepository_GetGormInstance(t *testing.T) {
 }
 
 func TestSpecification(t *testing.T) {
-	spec := ezutil.Specification[TestModel]{
+	spec := crud.Specification[TestModel]{
 		Model: TestModel{
 			Name: "Alice",
 			Age:  25,

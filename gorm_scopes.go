@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/itsLeonB/ezutil"
+	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/go-crud/internal"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"

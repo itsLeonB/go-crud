@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/itsLeonB/go-crud"
+	crud "github.com/itsLeonB/go-crud"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -54,7 +54,7 @@ func TestPaginate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var results []TestModel
-			err := db.Scopes(ezutil.Paginate(tt.page, tt.limit)).Find(&results).Error
+			err := db.Scopes(crud.Paginate(tt.page, tt.limit)).Find(&results).Error
 			assert.NoError(t, err, "Paginate should not return error")
 			assert.Len(t, results, tt.wantCount, "Paginate should return expected number of records")
 		})
@@ -91,7 +91,7 @@ func TestOrderBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var results []TestModel
-			query := db.Scopes(ezutil.OrderBy(tt.field, tt.ascending))
+			query := db.Scopes(crud.OrderBy(tt.field, tt.ascending))
 			err := query.Find(&results).Error
 
 			if tt.wantErr {
@@ -101,7 +101,7 @@ func TestOrderBy(t *testing.T) {
 
 			assert.NoError(t, err, "OrderBy should not return error")
 			assert.NotEmpty(t, results, "OrderBy should return results")
-			
+
 			if len(results) > 0 {
 				assert.Equal(t, tt.wantFirst, results[0].Name, "OrderBy should return correct first result")
 			}
@@ -136,7 +136,7 @@ func TestWhereBySpec(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var results []TestModel
-			err := db.Scopes(ezutil.WhereBySpec(tt.spec)).Find(&results).Error
+			err := db.Scopes(crud.WhereBySpec(tt.spec)).Find(&results).Error
 			assert.NoError(t, err, "WhereBySpec should not return error")
 			assert.Len(t, results, tt.wantCount, "WhereBySpec should return expected number of records")
 		})
@@ -165,7 +165,7 @@ func TestPreloadRelations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var result TestModel
-			err := db.Scopes(ezutil.PreloadRelations(tt.relations)).First(&result, user.ID).Error
+			err := db.Scopes(crud.PreloadRelations(tt.relations)).First(&result, user.ID).Error
 
 			if tt.wantErr {
 				assert.Error(t, err, "PreloadRelations should return error")
@@ -210,7 +210,7 @@ func TestBetweenTime(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var results []TestModel
-			err := db.Scopes(ezutil.BetweenTime(tt.col, tt.start, tt.end)).Find(&results).Error
+			err := db.Scopes(crud.BetweenTime(tt.col, tt.start, tt.end)).Find(&results).Error
 			assert.NoError(t, err, "BetweenTime should not return error")
 			assert.Len(t, results, tt.wantCount, "BetweenTime should return expected number of records")
 		})
@@ -235,7 +235,7 @@ func TestDefaultOrder(t *testing.T) {
 
 	t.Run("default order by created_at DESC", func(t *testing.T) {
 		var results []TestModel
-		err := db.Scopes(ezutil.DefaultOrder()).Find(&results).Error
+		err := db.Scopes(crud.DefaultOrder()).Find(&results).Error
 		assert.NoError(t, err, "DefaultOrder should not return error")
 		assert.Len(t, results, 3, "DefaultOrder should return all 3 records")
 
@@ -264,7 +264,7 @@ func TestForUpdate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var result TestModel
-			err := db.Scopes(ezutil.ForUpdate(tt.enable)).First(&result, testModel.ID).Error
+			err := db.Scopes(crud.ForUpdate(tt.enable)).First(&result, testModel.ID).Error
 			assert.NoError(t, err, "ForUpdate should not return error")
 			assert.NotZero(t, result.ID, "ForUpdate should return record with ID")
 			assert.Equal(t, testModel.Name, result.Name, "ForUpdate should return correct record")
