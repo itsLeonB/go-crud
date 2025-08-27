@@ -27,12 +27,19 @@ runs:
       go-version: ${{ inputs.go-version }}
       go-version-file: ${{ inputs.go-version-file }}
 
+  - name: Resolve Go paths
+    id: paths
+    shell: bash
+    run: |
+      echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+      echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+
   - name: Cache Go modules
     uses: actions/cache@v4
     with:
       path: |
-        ~/.cache/go-build
-        ~/go/pkg/mod
+        ${{ steps.paths.outputs.gocache }}
+        ${{ steps.paths.outputs.gomodcache }}
       key: ${{ runner.os }}-go-${{ steps.setup.outputs.go-version }}-${{ hashFiles('**/go.sum') }}
       restore-keys: |
         ${{ runner.os }}-go-${{ steps.setup.outputs.go-version }}-
