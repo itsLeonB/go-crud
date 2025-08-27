@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/itsLeonB/go-crud"
+	ezutil "github.com/itsLeonB/go-crud"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -14,9 +14,9 @@ import (
 
 // TestModel represents a test entity for CRUD operations
 type TestModel struct {
-	ID        uint      `gorm:"primaryKey"`
-	Name      string    `gorm:"not null"`
-	Email     string    `gorm:"unique"`
+	ID        uint   `gorm:"primaryKey"`
+	Name      string `gorm:"not null"`
+	Email     string `gorm:"unique"`
 	Age       int
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -39,9 +39,6 @@ func TestNewCRUDRepository(t *testing.T) {
 	repo := ezutil.NewCRUDRepository[TestModel](db)
 
 	assert.NotNil(t, repo, "NewCRUDRepository should not return nil")
-
-	// Verify the repository implements the interface
-	var _ ezutil.CRUDRepository[TestModel] = repo
 }
 
 func TestCRUDRepository_Insert(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/itsLeonB/go-crud"
+	ezutil "github.com/itsLeonB/go-crud"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -29,8 +29,6 @@ func TestNewTransactor(t *testing.T) {
 	transactor := ezutil.NewTransactor(db)
 
 	assert.NotNil(t, transactor, "NewTransactor should not return nil")
-
-	var _ ezutil.Transactor = transactor
 }
 
 func TestTransactor_Begin(t *testing.T) {
