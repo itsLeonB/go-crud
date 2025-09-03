@@ -16,7 +16,7 @@ func TestConstants(t *testing.T) {
 		{
 			name:     "ContextKeyGormTx value",
 			constant: string(lib.ContextKeyGormTx),
-			expected: "ezutil.gormTx",
+			expected: "go-crud.gormTx",
 		},
 		{
 			name:     "MsgTransactionError value",
@@ -36,7 +36,7 @@ func TestContextKeyGormTx_Type(t *testing.T) {
 	// Verify that ContextKeyGormTx is of the correct type
 	// The constant is defined as txKey type, not string directly
 	keyStr := string(lib.ContextKeyGormTx)
-	assert.Equal(t, "ezutil.gormTx", keyStr, "ContextKeyGormTx string value should be correct")
+	assert.Equal(t, "go-crud.gormTx", keyStr, "ContextKeyGormTx string value should be correct")
 }
 
 func TestMsgTransactionError_Type(t *testing.T) {
@@ -52,7 +52,7 @@ func TestConstants_NotEmpty(t *testing.T) {
 
 func TestConstants_Uniqueness(t *testing.T) {
 	constants := map[string]interface{}{
-		"ContextKeyGormTx":     lib.ContextKeyGormTx,
+		"ContextKeyGormTx":    lib.ContextKeyGormTx,
 		"MsgTransactionError": lib.MsgTransactionError,
 	}
 
@@ -70,9 +70,9 @@ func TestContextKeyGormTx_Usage(t *testing.T) {
 	// Should be usable as a context key (comparable type)
 	key1 := lib.ContextKeyGormTx
 	key2 := lib.ContextKeyGormTx
-	
+
 	assert.Equal(t, key1, key2, "ContextKeyGormTx should be comparable and equal to itself")
-	
+
 	// Should be different from other string values
 	otherKey := "some.other.key"
 	assert.NotEqual(t, string(key1), otherKey, "ContextKeyGormTx should be unique")
@@ -81,9 +81,9 @@ func TestContextKeyGormTx_Usage(t *testing.T) {
 func TestMsgTransactionError_Usage(t *testing.T) {
 	// Test that the message is suitable for error messages
 	msg := lib.MsgTransactionError
-	
+
 	assert.GreaterOrEqual(t, len(msg), 5, "MsgTransactionError should be a meaningful message")
-	
+
 	// Should not contain special characters that might break error handling
 	for _, char := range msg {
 		assert.True(t, char >= 32 && char <= 126, "MsgTransactionError should not contain non-printable character: %d", char)

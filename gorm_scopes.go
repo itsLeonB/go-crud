@@ -1,6 +1,4 @@
-package ezutil
-
-// todo move to go-crud pkg
+package crud
 
 import (
 	"reflect"

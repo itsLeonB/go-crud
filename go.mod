@@ -3,7 +3,8 @@ module github.com/itsLeonB/go-crud
 go 1.25.0
 
 require (
-	github.com/itsLeonB/ezutil/v2 v2.0.0-alpha
+	github.com/google/uuid v1.6.0
+	github.com/itsLeonB/ezutil/v2 v2.0.0
 	github.com/rotisserie/eris v0.5.4
 	github.com/stretchr/testify v1.11.0
 	gorm.io/driver/sqlite v1.6.0
@@ -12,7 +13,6 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
