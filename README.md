@@ -69,8 +69,8 @@ func main() {
     db.AutoMigrate(&User{})
 
     // Create repository and transactor
-    userRepo := ezutil.NewCRUDRepository[User](db)
-    transactor := ezutil.NewTransactor(db)
+    userRepo := crud.NewCRUDRepository[User](db)
+    transactor := crud.NewTransactor(db)
 
     ctx := context.Background()
 
@@ -114,7 +114,7 @@ type Specification[T any] struct {
 
 ```go
 ctx := context.Background()
-userRepo := ezutil.NewCRUDRepository[User](db)
+userRepo := crud.NewCRUDRepository[User](db)
 
 // Create a user
 user := User{
@@ -128,7 +128,7 @@ if err != nil {
 }
 
 // Find users
-spec := ezutil.Specification[User]{
+spec := crud.Specification[User]{
     Model: User{Age: 30}, // Find users with age 30
 }
 users, err := userRepo.FindAll(ctx, spec)
@@ -176,7 +176,7 @@ if err != nil {
 
 ```go
 // Find users with preloaded relations
-spec := ezutil.Specification[User]{
+spec := crud.Specification[User]{
     Model:            User{Age: 25},
     PreloadRelations: []string{"Profile", "Posts"},
     ForUpdate:        false,
@@ -184,7 +184,7 @@ spec := ezutil.Specification[User]{
 users, err := userRepo.FindAll(ctx, spec)
 
 // Pessimistic locking
-spec = ezutil.Specification[User]{
+spec = crud.Specification[User]{
     Model:     User{ID: 1},
     ForUpdate: true, // SELECT ... FOR UPDATE
 }
@@ -196,7 +196,7 @@ user, err := userRepo.FindFirst(ctx, spec)
 ### Basic Transactions
 
 ```go
-transactor := ezutil.NewTransactor(db)
+transactor := crud.NewTransactor(db)
 
 err := transactor.WithinTransaction(ctx, func(txCtx context.Context) error {
     // All operations within this function use the same transaction
@@ -270,23 +270,23 @@ The library provides powerful query scopes for common operations:
 ### Pagination
 
 ```go
-db.Scopes(ezutil.Paginate(page, limit)).Find(&users)
+db.Scopes(crud.Paginate(page, limit)).Find(&users)
 
 // Example: Get page 2 with 10 items per page
-db.Scopes(ezutil.Paginate(2, 10)).Find(&users)
+db.Scopes(crud.Paginate(2, 10)).Find(&users)
 ```
 
 ### Ordering
 
 ```go
 // Order by name ascending
-db.Scopes(ezutil.OrderBy("name", true)).Find(&users)
+db.Scopes(crud.OrderBy("name", true)).Find(&users)
 
 // Order by created_at descending
-db.Scopes(ezutil.OrderBy("created_at", false)).Find(&users)
+db.Scopes(crud.OrderBy("created_at", false)).Find(&users)
 
 // Default ordering (created_at DESC)
-db.Scopes(ezutil.DefaultOrder()).Find(&users)
+db.Scopes(crud.DefaultOrder()).Find(&users)
 ```
 
 ### Filtering
@@ -294,26 +294,26 @@ db.Scopes(ezutil.DefaultOrder()).Find(&users)
 ```go
 // Filter by specification
 spec := User{Age: 25, Name: "Alice"}
-db.Scopes(ezutil.WhereBySpec(spec)).Find(&users)
+db.Scopes(crud.WhereBySpec(spec)).Find(&users)
 
 // Time range filtering
 start := time.Now().Add(-24 * time.Hour)
 end := time.Now()
-db.Scopes(ezutil.BetweenTime("created_at", start, end)).Find(&users)
+db.Scopes(crud.BetweenTime("created_at", start, end)).Find(&users)
 ```
 
 ### Preloading Relations
 
 ```go
 relations := []string{"Profile", "Posts", "Comments"}
-db.Scopes(ezutil.PreloadRelations(relations)).Find(&users)
+db.Scopes(crud.PreloadRelations(relations)).Find(&users)
 ```
 
 ### Pessimistic Locking
 
 ```go
 // Add FOR UPDATE clause
-db.Scopes(ezutil.ForUpdate(true)).First(&user, id)
+db.Scopes(crud.ForUpdate(true)).First(&user, id)
 ```
 
 ### Combining Scopes
@@ -321,10 +321,10 @@ db.Scopes(ezutil.ForUpdate(true)).First(&user, id)
 ```go
 // Complex query with multiple scopes
 db.Scopes(
-    ezutil.WhereBySpec(User{Age: 25}),
-    ezutil.OrderBy("name", true),
-    ezutil.Paginate(1, 10),
-    ezutil.PreloadRelations([]string{"Profile"}),
+    crud.WhereBySpec(User{Age: 25}),
+    crud.OrderBy("name", true),
+    crud.Paginate(1, 10),
+    crud.PreloadRelations([]string{"Profile"}),
 ).Find(&users)
 ```
 
@@ -447,7 +447,7 @@ userRepo.BatchInsert(ctx, users)
 
 ```go
 // Only preload what you need
-spec := ezutil.Specification[User]{
+spec := crud.Specification[User]{
     PreloadRelations: []string{"Profile"}, // Not all relations
 }
 ```
@@ -456,7 +456,7 @@ spec := ezutil.Specification[User]{
 
 ```go
 // For large datasets
-db.Scopes(ezutil.Paginate(page, 50)).Find(&users)
+db.Scopes(crud.Paginate(page, 50)).Find(&users)
 ```
 
 ### 4. Leverage Transactions
