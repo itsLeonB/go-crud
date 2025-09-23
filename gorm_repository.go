@@ -41,8 +41,8 @@ type Specification[T any] struct {
 // The repository provides transaction-aware database operations for the specified entity type T.
 func NewRepository[T any](db *gorm.DB) Repository[T] {
 	var zero T
-	if reflect.TypeOf(zero).Kind() == reflect.Ptr {
-		panic("CRUDRepository does not support pointer types for T")
+	if typ := reflect.TypeOf(zero); typ != nil && typ.Kind() == reflect.Ptr {
+		panic("Repository does not support pointer types for T")
 	}
 	return &gormRepository[T]{db}
 }
