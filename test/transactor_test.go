@@ -91,7 +91,7 @@ func TestTransactor_Rollback(t *testing.T) {
 func TestTransactor_WithinTransaction_Success(t *testing.T) {
 	db := setupTransactorTestDB(t)
 	transactor := crud.NewTransactor(db)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	var insertedID uint
@@ -127,7 +127,7 @@ func TestTransactor_WithinTransaction_Success(t *testing.T) {
 func TestTransactor_WithinTransaction_Rollback(t *testing.T) {
 	db := setupTransactorTestDB(t)
 	transactor := crud.NewTransactor(db)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	var insertedID uint
@@ -164,7 +164,7 @@ func TestTransactor_WithinTransaction_Rollback(t *testing.T) {
 func TestTransactor_WithinTransaction_Nested(t *testing.T) {
 	db := setupTransactorTestDB(t)
 	transactor := crud.NewTransactor(db)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	var outerID, innerID uint

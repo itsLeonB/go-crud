@@ -106,3 +106,22 @@ func ForUpdate(enable bool) func(*gorm.DB) *gorm.DB {
 		return db
 	}
 }
+
+type DeletedFilter struct {
+	filterType internal.DeletedFilterType
+}
+
+func (df *DeletedFilter) WhereDeleted() func(*gorm.DB) *gorm.DB {
+	return func(d *gorm.DB) *gorm.DB {
+		if df.filterType == nil {
+			return d
+		}
+		return df.filterType.WhereDeleted()(d)
+	}
+}
+
+var (
+	ExcludeDeleted DeletedFilter = DeletedFilter{internal.ExcludeDeleted{}}
+	IncludeDeleted DeletedFilter = DeletedFilter{internal.IncludeDeleted{}}
+	OnlyDeleted    DeletedFilter = DeletedFilter{internal.OnlyDeleted{}}
+)

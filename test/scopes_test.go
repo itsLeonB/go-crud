@@ -11,13 +11,22 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// SoftDeleteModel for testing soft delete functionality
+type SoftDeleteModel struct {
+	ID        uint           `gorm:"primaryKey"`
+	Name      string         `gorm:"not null"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 func setupScopesTestDB(t *testing.T) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	assert.NoError(t, err, "Failed to connect to test database")
 
-	err = db.AutoMigrate(&TestModel{})
+	err = db.AutoMigrate(&TestModel{}, &SoftDeleteModel{})
 	assert.NoError(t, err, "Failed to migrate test models")
 
 	return db
@@ -268,6 +277,49 @@ func TestForUpdate(t *testing.T) {
 			assert.NoError(t, err, "ForUpdate should not return error")
 			assert.NotZero(t, result.ID, "ForUpdate should return record with ID")
 			assert.Equal(t, testModel.Name, result.Name, "ForUpdate should return correct record")
+		})
+	}
+}
+func TestDeletedFilter(t *testing.T) {
+	db := setupScopesTestDB(t)
+
+	// Insert test data
+	models := []SoftDeleteModel{
+		{Name: "Active1"},
+		{Name: "Active2"},
+		{Name: "ToDelete1"},
+		{Name: "ToDelete2"},
+	}
+	err := db.Create(&models).Error
+	assert.NoError(t, err, "Failed to create test data")
+
+	// Soft delete some records
+	err = db.Delete(&models[2]).Error
+	assert.NoError(t, err, "Failed to soft delete record")
+	err = db.Delete(&models[3]).Error
+	assert.NoError(t, err, "Failed to soft delete record")
+
+	tests := []struct {
+		name      string
+		filter    crud.DeletedFilter
+		useUnscoped bool
+		wantCount int
+	}{
+		{"exclude deleted", crud.ExcludeDeleted, false, 2},
+		{"include deleted", crud.IncludeDeleted, true, 4},
+		{"only deleted", crud.OnlyDeleted, true, 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var results []SoftDeleteModel
+			query := db.Scopes(tt.filter.WhereDeleted())
+			if tt.useUnscoped {
+				query = query.Unscoped()
+			}
+			err := query.Find(&results).Error
+			assert.NoError(t, err, "DeletedFilter should not return error")
+			assert.Len(t, results, tt.wantCount, "DeletedFilter should return expected number of records")
 		})
 	}
 }

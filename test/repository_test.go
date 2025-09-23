@@ -34,16 +34,16 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-func TestNewCRUDRepository(t *testing.T) {
+func TestNewRepository(t *testing.T) {
 	db := setupTestDB(t)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 
-	assert.NotNil(t, repo, "NewCRUDRepository should not return nil")
+	assert.NotNil(t, repo, "NewRepository should not return nil")
 }
 
-func TestCRUDRepository_Insert(t *testing.T) {
+func TestRepository_Insert(t *testing.T) {
 	db := setupTestDB(t)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	t.Run("successful insert", func(t *testing.T) {
@@ -68,9 +68,9 @@ func TestCRUDRepository_Insert(t *testing.T) {
 	})
 }
 
-func TestCRUDRepository_FindAll(t *testing.T) {
+func TestRepository_FindAll(t *testing.T) {
 	db := setupTestDB(t)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	// Insert test data
@@ -102,9 +102,9 @@ func TestCRUDRepository_FindAll(t *testing.T) {
 	})
 }
 
-func TestCRUDRepository_FindFirst(t *testing.T) {
+func TestRepository_FindFirst(t *testing.T) {
 	db := setupTestDB(t)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	testModel := TestModel{Name: "Alice", Email: "alice@example.com", Age: 25}
@@ -131,9 +131,9 @@ func TestCRUDRepository_FindFirst(t *testing.T) {
 	})
 }
 
-func TestCRUDRepository_Update(t *testing.T) {
+func TestRepository_Update(t *testing.T) {
 	db := setupTestDB(t)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	testModel := TestModel{Name: "Alice", Email: "alice@example.com", Age: 25}
@@ -162,9 +162,9 @@ func TestCRUDRepository_Update(t *testing.T) {
 	})
 }
 
-func TestCRUDRepository_Delete(t *testing.T) {
+func TestRepository_Delete(t *testing.T) {
 	db := setupTestDB(t)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	testModel := TestModel{Name: "Alice", Email: "alice@example.com", Age: 25}
@@ -190,9 +190,9 @@ func TestCRUDRepository_Delete(t *testing.T) {
 	})
 }
 
-func TestCRUDRepository_BatchInsert(t *testing.T) {
+func TestRepository_BatchInsert(t *testing.T) {
 	db := setupTestDB(t)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	t.Run("successful batch insert", func(t *testing.T) {
@@ -221,9 +221,9 @@ func TestCRUDRepository_BatchInsert(t *testing.T) {
 	})
 }
 
-func TestCRUDRepository_GetGormInstance(t *testing.T) {
+func TestRepository_GetGormInstance(t *testing.T) {
 	db := setupTestDB(t)
-	repo := crud.NewCRUDRepository[TestModel](db)
+	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
 
 	instance, err := repo.GetGormInstance(ctx)

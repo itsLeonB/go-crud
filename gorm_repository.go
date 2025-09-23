@@ -8,10 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// CRUDRepository defines a generic interface for basic CRUD operations on entities of type T.
+// Repository defines a generic interface for basic CRUD operations on entities of type T.
 // It provides standard database operations with context support and transaction awareness.
 // The interface abstracts the underlying database implementation for easier testing and flexibility.
-type CRUDRepository[T any] interface {
+type Repository[T any] interface {
 	// Insert creates a new record in the database.
 	Insert(ctx context.Context, model T) (T, error)
 	// FindAll retrieves multiple records based on the specification.
@@ -34,30 +34,31 @@ type Specification[T any] struct {
 	Model            T        // Model with fields set for WHERE conditions
 	PreloadRelations []string // Relations to eager load
 	ForUpdate        bool     // Whether to use SELECT ... FOR UPDATE
+	DeletedFilter    DeletedFilter
 }
 
-// NewCRUDRepository creates a new CRUD repository implementation using GORM.
+// NewRepository creates a new CRUD repository implementation using GORM.
 // The repository provides transaction-aware database operations for the specified entity type T.
-func NewCRUDRepository[T any](db *gorm.DB) CRUDRepository[T] {
+func NewRepository[T any](db *gorm.DB) Repository[T] {
 	var zero T
-	if reflect.TypeOf(zero).Kind() == reflect.Ptr {
-		panic("CRUDRepository does not support pointer types for T")
+	if typ := reflect.TypeOf(zero); typ != nil && typ.Kind() == reflect.Ptr {
+		panic("Repository does not support pointer types for T")
 	}
-	return &crudRepositoryGorm[T]{db}
+	return &gormRepository[T]{db}
 }
 
-type crudRepositoryGorm[T any] struct {
+type gormRepository[T any] struct {
 	db *gorm.DB
 }
 
-func (cr *crudRepositoryGorm[T]) Insert(ctx context.Context, model T) (T, error) {
+func (gr *gormRepository[T]) Insert(ctx context.Context, model T) (T, error) {
 	var zero T
 
-	if err := cr.checkZeroValue(model); err != nil {
+	if err := gr.checkZeroValue(model); err != nil {
 		return zero, err
 	}
 
-	db, err := cr.GetGormInstance(ctx)
+	db, err := gr.GetGormInstance(ctx)
 	if err != nil {
 		return zero, err
 	}
@@ -69,10 +70,10 @@ func (cr *crudRepositoryGorm[T]) Insert(ctx context.Context, model T) (T, error)
 	return model, nil
 }
 
-func (cr *crudRepositoryGorm[T]) FindAll(ctx context.Context, spec Specification[T]) ([]T, error) {
+func (gr *gormRepository[T]) FindAll(ctx context.Context, spec Specification[T]) ([]T, error) {
 	var models []T
 
-	db, err := cr.GetGormInstance(ctx)
+	db, err := gr.GetGormInstance(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +83,7 @@ func (cr *crudRepositoryGorm[T]) FindAll(ctx context.Context, spec Specification
 		DefaultOrder(),
 		PreloadRelations(spec.PreloadRelations),
 		ForUpdate(spec.ForUpdate),
+		spec.DeletedFilter.WhereDeleted(),
 	).
 		Find(&models).
 		Error
@@ -93,10 +95,10 @@ func (cr *crudRepositoryGorm[T]) FindAll(ctx context.Context, spec Specification
 	return models, nil
 }
 
-func (cr *crudRepositoryGorm[T]) FindFirst(ctx context.Context, spec Specification[T]) (T, error) {
+func (gr *gormRepository[T]) FindFirst(ctx context.Context, spec Specification[T]) (T, error) {
 	var model T
 
-	db, err := cr.GetGormInstance(ctx)
+	db, err := gr.GetGormInstance(ctx)
 	if err != nil {
 		return model, err
 	}
@@ -106,6 +108,7 @@ func (cr *crudRepositoryGorm[T]) FindFirst(ctx context.Context, spec Specificati
 		DefaultOrder(),
 		PreloadRelations(spec.PreloadRelations),
 		ForUpdate(spec.ForUpdate),
+		spec.DeletedFilter.WhereDeleted(),
 	).
 		First(&model).
 		Error
@@ -120,14 +123,14 @@ func (cr *crudRepositoryGorm[T]) FindFirst(ctx context.Context, spec Specificati
 	return model, nil
 }
 
-func (cr *crudRepositoryGorm[T]) Update(ctx context.Context, model T) (T, error) {
+func (gr *gormRepository[T]) Update(ctx context.Context, model T) (T, error) {
 	var zero T
 
-	if err := cr.checkZeroValue(model); err != nil {
+	if err := gr.checkZeroValue(model); err != nil {
 		return zero, err
 	}
 
-	db, err := cr.GetGormInstance(ctx)
+	db, err := gr.GetGormInstance(ctx)
 	if err != nil {
 		return zero, err
 	}
@@ -139,12 +142,12 @@ func (cr *crudRepositoryGorm[T]) Update(ctx context.Context, model T) (T, error)
 	return model, nil
 }
 
-func (cr *crudRepositoryGorm[T]) Delete(ctx context.Context, model T) error {
-	if err := cr.checkZeroValue(model); err != nil {
+func (gr *gormRepository[T]) Delete(ctx context.Context, model T) error {
+	if err := gr.checkZeroValue(model); err != nil {
 		return err
 	}
 
-	db, err := cr.GetGormInstance(ctx)
+	db, err := gr.GetGormInstance(ctx)
 	if err != nil {
 		return err
 	}
@@ -156,12 +159,12 @@ func (cr *crudRepositoryGorm[T]) Delete(ctx context.Context, model T) error {
 	return nil
 }
 
-func (cr *crudRepositoryGorm[T]) BatchInsert(ctx context.Context, models []T) ([]T, error) {
+func (gr *gormRepository[T]) BatchInsert(ctx context.Context, models []T) ([]T, error) {
 	if len(models) < 1 {
 		return nil, eris.Errorf("inserted models cannot be empty")
 	}
 
-	db, err := cr.GetGormInstance(ctx)
+	db, err := gr.GetGormInstance(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +176,7 @@ func (cr *crudRepositoryGorm[T]) BatchInsert(ctx context.Context, models []T) ([
 	return models, nil
 }
 
-func (cr *crudRepositoryGorm[T]) checkZeroValue(model T) error {
+func (gr *gormRepository[T]) checkZeroValue(model T) error {
 	if reflect.DeepEqual(model, *new(T)) {
 		return eris.New("model cannot be zero value")
 	}
@@ -181,7 +184,7 @@ func (cr *crudRepositoryGorm[T]) checkZeroValue(model T) error {
 	return nil
 }
 
-func (cr *crudRepositoryGorm[T]) GetGormInstance(ctx context.Context) (*gorm.DB, error) {
+func (gr *gormRepository[T]) GetGormInstance(ctx context.Context) (*gorm.DB, error) {
 	tx, err := GetTxFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -190,5 +193,5 @@ func (cr *crudRepositoryGorm[T]) GetGormInstance(ctx context.Context) (*gorm.DB,
 		return tx, nil
 	}
 
-	return cr.db.WithContext(ctx), nil
+	return gr.db.WithContext(ctx), nil
 }
