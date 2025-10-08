@@ -7,6 +7,7 @@ require (
 	github.com/itsLeonB/ezutil/v2 v2.0.0
 	github.com/rotisserie/eris v0.5.4
 	github.com/stretchr/testify v1.11.0
+	go.uber.org/mock v0.6.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.30.1
 )

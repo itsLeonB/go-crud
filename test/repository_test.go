@@ -190,7 +190,7 @@ func TestRepository_Delete(t *testing.T) {
 	})
 }
 
-func TestRepository_BatchInsert(t *testing.T) {
+func TestRepository_InsertMany(t *testing.T) {
 	db := setupTestDB(t)
 	repo := crud.NewRepository[TestModel](db)
 	ctx := context.Background()
@@ -202,21 +202,21 @@ func TestRepository_BatchInsert(t *testing.T) {
 			{Name: "Charlie", Email: "charlie@example.com", Age: 35},
 		}
 
-		results, err := repo.BatchInsert(ctx, models)
-		assert.NoError(t, err, "BatchInsert should not return error")
-		assert.Len(t, results, len(models), "BatchInsert should return same number of records")
+		results, err := repo.InsertMany(ctx, models)
+		assert.NoError(t, err, "InsertMany should not return error")
+		assert.Len(t, results, len(models), "InsertMany should return same number of records")
 
 		for i, result := range results {
-			assert.NotZero(t, result.ID, "BatchInsert result[%d] should have ID set", i)
-			assert.Equal(t, models[i].Name, result.Name, "BatchInsert result[%d] should preserve Name", i)
-			assert.Equal(t, models[i].Email, result.Email, "BatchInsert result[%d] should preserve Email", i)
-			assert.Equal(t, models[i].Age, result.Age, "BatchInsert result[%d] should preserve Age", i)
+			assert.NotZero(t, result.ID, "InsertMany result[%d] should have ID set", i)
+			assert.Equal(t, models[i].Name, result.Name, "InsertMany result[%d] should preserve Name", i)
+			assert.Equal(t, models[i].Email, result.Email, "InsertMany result[%d] should preserve Email", i)
+			assert.Equal(t, models[i].Age, result.Age, "InsertMany result[%d] should preserve Age", i)
 		}
 	})
 
 	t.Run("empty batch insert", func(t *testing.T) {
-		_, err := repo.BatchInsert(ctx, []TestModel{})
-		assert.Error(t, err, "BatchInsert should return error for empty slice")
+		_, err := repo.InsertMany(ctx, []TestModel{})
+		assert.Error(t, err, "InsertMany should return error for empty slice")
 		assert.Contains(t, err.Error(), "empty", "Error should mention empty")
 	})
 }

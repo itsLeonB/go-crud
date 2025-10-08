@@ -22,8 +22,8 @@ type Repository[T any] interface {
 	Update(ctx context.Context, model T) (T, error)
 	// Delete removes a record from the database (hard delete).
 	Delete(ctx context.Context, model T) error
-	// BatchInsert creates multiple records in a single database operation.
-	BatchInsert(ctx context.Context, models []T) ([]T, error)
+	// InsertMany creates multiple records in a single database operation.
+	InsertMany(ctx context.Context, models []T) ([]T, error)
 	// GetGormInstance returns the appropriate GORM DB instance (transaction-aware).
 	GetGormInstance(ctx context.Context) (*gorm.DB, error)
 }
@@ -159,7 +159,7 @@ func (gr *gormRepository[T]) Delete(ctx context.Context, model T) error {
 	return nil
 }
 
-func (gr *gormRepository[T]) BatchInsert(ctx context.Context, models []T) ([]T, error) {
+func (gr *gormRepository[T]) InsertMany(ctx context.Context, models []T) ([]T, error) {
 	if len(models) < 1 {
 		return nil, eris.Errorf("inserted models cannot be empty")
 	}
