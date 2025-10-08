@@ -13,7 +13,7 @@ fi
 
 # Run tests
 echo "\n=== Running tests ==="
-if ! make test-all; then
+if ! make test; then
     echo "❌ Tests failed! Please fix the test issues before pushing."
     exit 1
 fi

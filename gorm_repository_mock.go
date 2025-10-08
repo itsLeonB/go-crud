@@ -55,6 +55,20 @@ func (mr *MockRepositoryMockRecorder[T]) Delete(ctx, model any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository[T])(nil).Delete), ctx, model)
 }
 
+// DeleteMany mocks base method.
+func (m *MockRepository[T]) DeleteMany(ctx context.Context, models []T) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMany", ctx, models)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteMany indicates an expected call of DeleteMany.
+func (mr *MockRepositoryMockRecorder[T]) DeleteMany(ctx, models any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMany", reflect.TypeOf((*MockRepository[T])(nil).DeleteMany), ctx, models)
+}
+
 // FindAll mocks base method.
 func (m *MockRepository[T]) FindAll(ctx context.Context, spec Specification[T]) ([]T, error) {
 	m.ctrl.T.Helper()
