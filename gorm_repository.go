@@ -199,7 +199,7 @@ func (gr *gormRepository[T]) DeleteMany(ctx context.Context, models []T) error {
 
 func (gr *gormRepository[T]) SaveMany(ctx context.Context, models []T) ([]T, error) {
 	if len(models) < 1 {
-		return nil, eris.Errorf("inserted models cannot be empty")
+		return nil, eris.Errorf("saved models cannot be empty")
 	}
 
 	db, err := gr.GetGormInstance(ctx)
@@ -208,7 +208,7 @@ func (gr *gormRepository[T]) SaveMany(ctx context.Context, models []T) ([]T, err
 	}
 
 	if err = db.Save(&models).Error; err != nil {
-		return nil, eris.Wrap(err, "error batch inserting data")
+		return nil, eris.Wrap(err, "error saving many data")
 	}
 
 	return models, nil
