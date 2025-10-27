@@ -144,6 +144,21 @@ func (mr *MockRepositoryMockRecorder[T]) InsertMany(ctx, models any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertMany", reflect.TypeOf((*MockRepository[T])(nil).InsertMany), ctx, models)
 }
 
+// SaveMany mocks base method.
+func (m *MockRepository[T]) SaveMany(ctx context.Context, models []T) ([]T, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveMany", ctx, models)
+	ret0, _ := ret[0].([]T)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SaveMany indicates an expected call of SaveMany.
+func (mr *MockRepositoryMockRecorder[T]) SaveMany(ctx, models any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveMany", reflect.TypeOf((*MockRepository[T])(nil).SaveMany), ctx, models)
+}
+
 // Update mocks base method.
 func (m *MockRepository[T]) Update(ctx context.Context, model T) (T, error) {
 	m.ctrl.T.Helper()
