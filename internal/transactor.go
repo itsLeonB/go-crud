@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/itsLeonB/go-crud/lib"
-	"github.com/rotisserie/eris"
+	"github.com/itsLeonB/ungerr"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +16,7 @@ type GormTransactor struct {
 func (t *GormTransactor) Begin(ctx context.Context) (context.Context, error) {
 	tx := t.DB.WithContext(ctx).Begin()
 	if err := tx.Error; err != nil {
-		return nil, eris.Wrap(err, lib.MsgTransactionError)
+		return nil, ungerr.Wrap(err, lib.MsgTransactionError)
 	}
 
 	return context.WithValue(ctx, lib.ContextKeyGormTx, tx), nil
@@ -30,7 +30,7 @@ func (t *GormTransactor) Commit(ctx context.Context) error {
 	if tx != nil {
 		err = tx.WithContext(ctx).Commit().Error
 		if err != nil {
-			return eris.Wrap(err, lib.MsgTransactionError)
+			return ungerr.Wrap(err, lib.MsgTransactionError)
 		}
 	}
 
@@ -63,7 +63,7 @@ func (t *GormTransactor) WithinTransaction(ctx context.Context, serviceFn func(c
 	// Check if we're already within a transaction
 	existingTx, err := GetTxFromContext(ctx)
 	if err != nil {
-		return eris.Wrap(err, "error checking existing transaction")
+		return ungerr.Wrap(err, "error checking existing transaction")
 	}
 
 	// If we're already in a transaction, just execute the service function
@@ -74,7 +74,7 @@ func (t *GormTransactor) WithinTransaction(ctx context.Context, serviceFn func(c
 	// Start a new transaction
 	ctx, err = t.Begin(ctx)
 	if err != nil {
-		return eris.Wrap(err, "error starting transaction")
+		return ungerr.Wrap(err, "error starting transaction")
 	}
 	defer t.Rollback(ctx)
 
@@ -90,7 +90,7 @@ func GetTxFromContext(ctx context.Context) (*gorm.DB, error) {
 	if trx != nil {
 		tx, ok := trx.(*gorm.DB)
 		if !ok {
-			return nil, eris.New("error getting tx from ctx")
+			return nil, ungerr.Unknown("error getting tx from ctx")
 		}
 
 		return tx, nil
