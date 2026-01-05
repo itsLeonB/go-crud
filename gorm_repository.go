@@ -38,7 +38,6 @@ type Specification[T any] struct {
 	Model            T        // Model with fields set for WHERE conditions
 	PreloadRelations []string // Relations to eager load
 	ForUpdate        bool     // Whether to use SELECT ... FOR UPDATE
-	DeletedFilter    DeletedFilter
 }
 
 // NewRepository creates a new CRUD repository implementation using GORM.
@@ -87,7 +86,6 @@ func (gr *gormRepository[T]) FindAll(ctx context.Context, spec Specification[T])
 		DefaultOrder(),
 		PreloadRelations(spec.PreloadRelations),
 		ForUpdate(spec.ForUpdate),
-		spec.DeletedFilter.WhereDeleted(),
 	).
 		Find(&models).
 		Error
@@ -112,7 +110,6 @@ func (gr *gormRepository[T]) FindFirst(ctx context.Context, spec Specification[T
 		DefaultOrder(),
 		PreloadRelations(spec.PreloadRelations),
 		ForUpdate(spec.ForUpdate),
-		spec.DeletedFilter.WhereDeleted(),
 	).
 		First(&model).
 		Error
