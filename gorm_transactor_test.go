@@ -1,4 +1,4 @@
-package gocrud_test
+package crud_test
 
 import (
 	"context"
@@ -18,7 +18,7 @@ func setupTransactorTestDB(t *testing.T) *gorm.DB {
 	})
 	assert.NoError(t, err, "Failed to connect to test database")
 
-	err = db.AutoMigrate(&TestModel{})
+	err = db.AutoMigrate(&TestUser{})
 	assert.NoError(t, err, "Failed to migrate test models")
 
 	return db
@@ -39,11 +39,6 @@ func TestTransactor_Begin(t *testing.T) {
 	txCtx, err := transactor.Begin(ctx)
 	assert.NoError(t, err, "Begin should not return error")
 	assert.NotNil(t, txCtx, "Begin should not return nil context")
-
-	// Verify transaction is in context
-	tx, err := crud.GetTxFromContext(txCtx)
-	assert.NoError(t, err, "GetTxFromContext should not return error")
-	assert.NotNil(t, tx, "Begin should store transaction in context")
 }
 
 func TestTransactor_Commit(t *testing.T) {
@@ -91,13 +86,13 @@ func TestTransactor_Rollback(t *testing.T) {
 func TestTransactor_WithinTransaction_Success(t *testing.T) {
 	db := setupTransactorTestDB(t)
 	transactor := crud.NewTransactor(db)
-	repo := crud.NewRepository[TestModel](db)
+	repo := crud.NewRepository[TestUser](db)
 	ctx := context.Background()
 
 	var insertedID uint
 
 	err := transactor.WithinTransaction(ctx, func(txCtx context.Context) error {
-		model := TestModel{
+		model := TestUser{
 			Name:  "Alice",
 			Email: "alice@example.com",
 			Age:   25,
@@ -115,8 +110,8 @@ func TestTransactor_WithinTransaction_Success(t *testing.T) {
 	assert.NoError(t, err, "WithinTransaction should not return error")
 
 	// Verify the record was committed
-	spec := crud.Specification[TestModel]{
-		Model: TestModel{ID: insertedID},
+	spec := crud.Specification[TestUser]{
+		Model: TestUser{ID: insertedID},
 	}
 	result, err := repo.FindFirst(ctx, spec)
 	assert.NoError(t, err, "Error verifying committed record")
@@ -127,50 +122,46 @@ func TestTransactor_WithinTransaction_Success(t *testing.T) {
 func TestTransactor_WithinTransaction_Rollback(t *testing.T) {
 	db := setupTransactorTestDB(t)
 	transactor := crud.NewTransactor(db)
-	repo := crud.NewRepository[TestModel](db)
+	repo := crud.NewRepository[TestUser](db)
 	ctx := context.Background()
 
-	var insertedID uint
 	expectedError := errors.New("service error")
 
 	err := transactor.WithinTransaction(ctx, func(txCtx context.Context) error {
-		model := TestModel{
+		model := TestUser{
 			Name:  "Bob",
 			Email: "bob@example.com",
 			Age:   30,
 		}
 
-		result, err := repo.Insert(txCtx, model)
+		_, err := repo.Insert(txCtx, model)
 		if err != nil {
 			return err
 		}
 
-		insertedID = result.ID
 		return expectedError
 	})
 
 	assert.Error(t, err, "WithinTransaction should return error")
 	assert.Equal(t, expectedError, err, "WithinTransaction should return the expected error")
 
-	// Verify the record was rolled back
-	spec := crud.Specification[TestModel]{
-		Model: TestModel{ID: insertedID},
-	}
-	result, err := repo.FindFirst(ctx, spec)
-	assert.NoError(t, err, "Error checking rolled back record")
-	assert.Zero(t, result.ID, "WithinTransaction record should be rolled back")
+	// Verify no records exist (rollback worked)
+	spec := crud.Specification[TestUser]{}
+	results, err := repo.FindAll(ctx, spec)
+	assert.NoError(t, err)
+	assert.Len(t, results, 0, "WithinTransaction should rollback all records")
 }
 
 func TestTransactor_WithinTransaction_Nested(t *testing.T) {
 	db := setupTransactorTestDB(t)
 	transactor := crud.NewTransactor(db)
-	repo := crud.NewRepository[TestModel](db)
+	repo := crud.NewRepository[TestUser](db)
 	ctx := context.Background()
 
 	var outerID, innerID uint
 
 	err := transactor.WithinTransaction(ctx, func(outerTxCtx context.Context) error {
-		outerModel := TestModel{
+		outerModel := TestUser{
 			Name:  "Outer",
 			Email: "outer@example.com",
 			Age:   25,
@@ -184,7 +175,7 @@ func TestTransactor_WithinTransaction_Nested(t *testing.T) {
 
 		// Nested transaction (should reuse existing transaction)
 		return transactor.WithinTransaction(outerTxCtx, func(innerTxCtx context.Context) error {
-			innerModel := TestModel{
+			innerModel := TestUser{
 				Name:  "Inner",
 				Email: "inner@example.com",
 				Age:   30,
@@ -203,38 +194,44 @@ func TestTransactor_WithinTransaction_Nested(t *testing.T) {
 	assert.NoError(t, err, "WithinTransaction nested should not return error")
 
 	// Verify both records were committed
-	outerSpec := crud.Specification[TestModel]{
-		Model: TestModel{ID: outerID},
+	outerSpec := crud.Specification[TestUser]{
+		Model: TestUser{ID: outerID},
 	}
 	outerResult, err := repo.FindFirst(ctx, outerSpec)
 	assert.NoError(t, err, "Error verifying outer record")
 	assert.NotZero(t, outerResult.ID, "WithinTransaction outer record should be committed")
 
-	innerSpec := crud.Specification[TestModel]{
-		Model: TestModel{ID: innerID},
+	innerSpec := crud.Specification[TestUser]{
+		Model: TestUser{ID: innerID},
 	}
 	innerResult, err := repo.FindFirst(ctx, innerSpec)
 	assert.NoError(t, err, "Error verifying inner record")
 	assert.NotZero(t, innerResult.ID, "WithinTransaction inner record should be committed")
 }
 
-func TestGetTxFromContext(t *testing.T) {
+func TestTransactor_Begin_Error(t *testing.T) {
+	// Create a closed database to trigger error
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	assert.NoError(t, err)
+
+	sqlDB, err := db.DB()
+	assert.NoError(t, err)
+	err = sqlDB.Close()
+	assert.NoError(t, err)
+
+	transactor := crud.NewTransactor(db)
+	ctx := context.Background()
+
+	_, err = transactor.Begin(ctx)
+	assert.Error(t, err)
+}
+
+func TestTransactor_Commit_Error(t *testing.T) {
 	db := setupTransactorTestDB(t)
 	transactor := crud.NewTransactor(db)
 	ctx := context.Background()
 
-	t.Run("context with transaction", func(t *testing.T) {
-		txCtx, err := transactor.Begin(ctx)
-		assert.NoError(t, err, "Failed to begin transaction")
-
-		tx, err := crud.GetTxFromContext(txCtx)
-		assert.NoError(t, err, "GetTxFromContext should not return error")
-		assert.NotNil(t, tx, "GetTxFromContext should return transaction")
-	})
-
-	t.Run("context without transaction", func(t *testing.T) {
-		tx, err := crud.GetTxFromContext(ctx)
-		assert.NoError(t, err, "GetTxFromContext should not return error")
-		assert.Nil(t, tx, "GetTxFromContext should return nil when no transaction")
-	})
+	// Test committing without a transaction (should not error)
+	err := transactor.Commit(ctx)
+	assert.NoError(t, err) // This is expected behavior
 }

@@ -1,76 +1,54 @@
-TEST_DIR := ./test
-COVER_PKG := ./...
-
-.PHONY: help \
-lint \
-test \
-test-verbose \
-test-coverage \
-test-coverage-html \
-test-clean \
-mock \
-install-pre-push-hook \
-uninstall-pre-push-hook
+.PHONY: help lint build test test-verbose test-coverage test-coverage-html test-clean install-pre-push-hook uninstall-pre-push-hook mock
 
 help:
-	@echo "Makefile commands:"
-	@echo "  make lint                    - Run golangci-lint on the codebase"
-	@echo "  make test                    - Run all tests"
-	@echo "  make test-verbose            - Run all tests with verbose output"
-	@echo "  make test-coverage           - Run all tests with coverage report"
-	@echo "  make test-coverage-html      - Run all tests and generate HTML coverage report"
-	@echo "  make test-clean              - Clean test cache and run tests"
-	@echo "  make mock                    - Generate mock implementations"
-	@echo "  make install-pre-push-hook   - Install the pre-push git hook"
-	@echo "  make uninstall-pre-push-hook - Uninstall the pre-push git hook"
+	@echo "Available commands:"
+	@echo "  help                         - Show this help message"
+	@echo "  lint                         - Run golangci-lint on the codebase"
+	@echo "  build                        - Build the project"
+	@echo "  test                     	  - Run all tests"
+	@echo "  test-verbose                 - Run all tests with verbose output"
+	@echo "  test-coverage                - Run tests with coverage report for each package"
+	@echo "  test-coverage-html           - Run tests and generate HTML coverage reports for each package"
+	@echo "  test-clean                   - Clean test cache and run tests"
+	@echo "  install-pre-push-hook        - Install the pre-push git hook"
+	@echo "  uninstall-pre-push-hook      - Uninstall the pre-push git hook"
+	@echo "  mock                         - Generate mocks"
 
 lint:
 	golangci-lint run ./...
 
+build:
+	go build -v ./...
+
 test:
 	@echo "Running all tests..."
-	@if [ -d $(TEST_DIR) ]; then \
-		go test $(TEST_DIR)/...; \
-	else \
-		echo "No tests found in $(TEST_DIR), skipping."; \
-	fi
+	go test ./...
 
 test-verbose:
 	@echo "Running all tests with verbose output..."
-	@if [ -d $(TEST_DIR) ]; then \
-		go test -v $(TEST_DIR)/...; \
-	else \
-		echo "No tests found in $(TEST_DIR), skipping."; \
-	fi
+	go test -v ./...
 
 test-coverage:
-	@echo "Running all tests with coverage report..."
-	@if [ -d $(TEST_DIR) ]; then \
-		go test -v -cover -coverprofile=coverage.out -coverpkg=$(COVER_PKG) $(TEST_DIR)/...; \
-	else \
-		echo "No tests found in $(TEST_DIR), skipping."; \
-	fi
+	@echo "Running tests with coverage report for each package..."
+	@for pkg in $$(go list ./...); do \
+		pkgname=$$(echo $$pkg | tr '/' '-'); \
+		echo "Coverage for $$pkg:"; \
+		go test -v -coverpkg=$$pkg -coverprofile=coverage-$$pkgname.out $$pkg; \
+	done
 
 test-coverage-html:
-	@echo "Running all tests and generating HTML coverage report..."
-	@if [ -d $(TEST_DIR) ]; then \
-		go test -v -cover -coverprofile=coverage.out -coverpkg=$(COVER_PKG) $(TEST_DIR)/... && \
-		go tool cover -html=coverage.out -o coverage.html && \
-		echo "Coverage report generated: coverage.html"; \
-	else \
-		echo "No tests found in $(TEST_DIR), skipping."; \
-	fi
+	@echo "Running tests and generating HTML coverage reports for each package..."
+	@for pkg in $$(go list ./...); do \
+		pkgname=$$(echo $$pkg | tr '/' '-'); \
+		echo "Coverage for $$pkg:"; \
+		go test -v -coverpkg=$$pkg -coverprofile=coverage-$$pkgname.out $$pkg; \
+		go tool cover -html=coverage-$$pkgname.out -o coverage-$$pkgname.html; \
+	done
+	@echo "Coverage reports generated: coverage-*.html"
 
 test-clean:
 	@echo "Cleaning test cache and running tests..."
-	@if [ -d $(TEST_DIR) ]; then \
-		go clean -testcache && go test -v $(TEST_DIR)/...; \
-	else \
-		echo "No tests found in $(TEST_DIR), skipping."; \
-	fi
-
-mock:
-	@scripts/gen-mocks.sh
+	go clean -testcache && go test -v ./...
 
 install-pre-push-hook:
 	@echo "Installing pre-push git hook..."
@@ -83,3 +61,6 @@ uninstall-pre-push-hook:
 	@echo "Uninstalling pre-push git hook..."
 	@rm -f .git/hooks/pre-push
 	@echo "Pre-push hook uninstalled successfully!"
+
+mock:
+	@scripts/gen-mocks.sh

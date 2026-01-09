@@ -1,4 +1,4 @@
-package gocrud_test
+package crud_test
 
 import (
 	"testing"
@@ -10,6 +10,16 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+// TestModel for testing scopes
+type TestModel struct {
+	ID        uint      `gorm:"primaryKey"`
+	Name      string    `gorm:"not null"`
+	Email     string    `gorm:"unique"`
+	Age       int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
 
 // SoftDeleteModel for testing soft delete functionality
 type SoftDeleteModel struct {
