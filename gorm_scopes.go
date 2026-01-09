@@ -6,7 +6,7 @@ import (
 
 	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/go-crud/internal"
-	"github.com/rotisserie/eris"
+	"github.com/itsLeonB/ungerr"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -34,7 +34,7 @@ func OrderBy(field string, ascending bool) func(db *gorm.DB) *gorm.DB {
 		// Basic validation to prevent SQL injection
 		// Only allow alphanumeric characters, underscores, and dots for table.column
 		if !internal.IsValidFieldName(field) {
-			_ = db.AddError(eris.Errorf("invalid field name: %s", field))
+			_ = db.AddError(ungerr.Unknownf("invalid field name: %s", field))
 			return db
 		}
 
@@ -106,22 +106,3 @@ func ForUpdate(enable bool) func(*gorm.DB) *gorm.DB {
 		return db
 	}
 }
-
-type DeletedFilter struct {
-	filterType internal.DeletedFilterType
-}
-
-func (df *DeletedFilter) WhereDeleted() func(*gorm.DB) *gorm.DB {
-	return func(d *gorm.DB) *gorm.DB {
-		if df.filterType == nil {
-			return d
-		}
-		return df.filterType.WhereDeleted()(d)
-	}
-}
-
-var (
-	ExcludeDeleted DeletedFilter = DeletedFilter{internal.ExcludeDeleted{}}
-	IncludeDeleted DeletedFilter = DeletedFilter{internal.IncludeDeleted{}}
-	OnlyDeleted    DeletedFilter = DeletedFilter{internal.OnlyDeleted{}}
-)

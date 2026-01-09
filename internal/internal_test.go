@@ -1,4 +1,4 @@
-package gocrud_test
+package internal_test
 
 import (
 	"testing"

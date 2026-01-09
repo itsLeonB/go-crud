@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/rotisserie/eris"
+	"github.com/itsLeonB/ungerr"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +38,6 @@ type Specification[T any] struct {
 	Model            T        // Model with fields set for WHERE conditions
 	PreloadRelations []string // Relations to eager load
 	ForUpdate        bool     // Whether to use SELECT ... FOR UPDATE
-	DeletedFilter    DeletedFilter
 }
 
 // NewRepository creates a new CRUD repository implementation using GORM.
@@ -68,7 +67,7 @@ func (gr *gormRepository[T]) Insert(ctx context.Context, model T) (T, error) {
 	}
 
 	if err = db.Create(&model).Error; err != nil {
-		return zero, eris.Wrap(err, "error inserting data")
+		return zero, ungerr.Wrap(err, "error inserting data")
 	}
 
 	return model, nil
@@ -87,13 +86,12 @@ func (gr *gormRepository[T]) FindAll(ctx context.Context, spec Specification[T])
 		DefaultOrder(),
 		PreloadRelations(spec.PreloadRelations),
 		ForUpdate(spec.ForUpdate),
-		spec.DeletedFilter.WhereDeleted(),
 	).
 		Find(&models).
 		Error
 
 	if err != nil {
-		return nil, eris.Wrap(err, "error querying data")
+		return nil, ungerr.Wrap(err, "error querying data")
 	}
 
 	return models, nil
@@ -112,7 +110,6 @@ func (gr *gormRepository[T]) FindFirst(ctx context.Context, spec Specification[T
 		DefaultOrder(),
 		PreloadRelations(spec.PreloadRelations),
 		ForUpdate(spec.ForUpdate),
-		spec.DeletedFilter.WhereDeleted(),
 	).
 		First(&model).
 		Error
@@ -121,7 +118,7 @@ func (gr *gormRepository[T]) FindFirst(ctx context.Context, spec Specification[T
 		if err == gorm.ErrRecordNotFound {
 			return model, nil
 		}
-		return model, eris.Wrap(err, "error querying data")
+		return model, ungerr.Wrap(err, "error querying data")
 	}
 
 	return model, nil
@@ -140,7 +137,7 @@ func (gr *gormRepository[T]) Update(ctx context.Context, model T) (T, error) {
 	}
 
 	if err = db.Save(&model).Error; err != nil {
-		return zero, eris.Wrap(err, "error updating data")
+		return zero, ungerr.Wrap(err, "error updating data")
 	}
 
 	return model, nil
@@ -157,7 +154,7 @@ func (gr *gormRepository[T]) Delete(ctx context.Context, model T) error {
 	}
 
 	if err = db.Unscoped().Delete(&model).Error; err != nil {
-		return eris.Wrap(err, "error deleting data")
+		return ungerr.Wrap(err, "error deleting data")
 	}
 
 	return nil
@@ -165,7 +162,7 @@ func (gr *gormRepository[T]) Delete(ctx context.Context, model T) error {
 
 func (gr *gormRepository[T]) InsertMany(ctx context.Context, models []T) ([]T, error) {
 	if len(models) < 1 {
-		return nil, eris.Errorf("inserted models cannot be empty")
+		return nil, ungerr.Unknown("inserted models cannot be empty")
 	}
 
 	db, err := gr.GetGormInstance(ctx)
@@ -174,7 +171,7 @@ func (gr *gormRepository[T]) InsertMany(ctx context.Context, models []T) ([]T, e
 	}
 
 	if err = db.Create(&models).Error; err != nil {
-		return nil, eris.Wrap(err, "error batch inserting data")
+		return nil, ungerr.Wrap(err, "error batch inserting data")
 	}
 
 	return models, nil
@@ -182,7 +179,7 @@ func (gr *gormRepository[T]) InsertMany(ctx context.Context, models []T) ([]T, e
 
 func (gr *gormRepository[T]) DeleteMany(ctx context.Context, models []T) error {
 	if len(models) < 1 {
-		return eris.Errorf("deleted models cannot be empty")
+		return ungerr.Unknown("deleted models cannot be empty")
 	}
 
 	db, err := gr.GetGormInstance(ctx)
@@ -191,7 +188,7 @@ func (gr *gormRepository[T]) DeleteMany(ctx context.Context, models []T) error {
 	}
 
 	if err = db.Unscoped().Delete(&models).Error; err != nil {
-		return eris.Wrap(err, "error batch deleting data")
+		return ungerr.Wrap(err, "error batch deleting data")
 	}
 
 	return nil
@@ -199,7 +196,7 @@ func (gr *gormRepository[T]) DeleteMany(ctx context.Context, models []T) error {
 
 func (gr *gormRepository[T]) SaveMany(ctx context.Context, models []T) ([]T, error) {
 	if len(models) < 1 {
-		return nil, eris.Errorf("saved models cannot be empty")
+		return nil, ungerr.Unknown("saved models cannot be empty")
 	}
 
 	db, err := gr.GetGormInstance(ctx)
@@ -208,7 +205,7 @@ func (gr *gormRepository[T]) SaveMany(ctx context.Context, models []T) ([]T, err
 	}
 
 	if err = db.Save(&models).Error; err != nil {
-		return nil, eris.Wrap(err, "error saving many data")
+		return nil, ungerr.Wrap(err, "error saving many data")
 	}
 
 	return models, nil
@@ -216,7 +213,7 @@ func (gr *gormRepository[T]) SaveMany(ctx context.Context, models []T) ([]T, err
 
 func (gr *gormRepository[T]) checkZeroValue(model T) error {
 	if reflect.DeepEqual(model, *new(T)) {
-		return eris.New("model cannot be zero value")
+		return ungerr.Unknown("model cannot be zero value")
 	}
 
 	return nil
