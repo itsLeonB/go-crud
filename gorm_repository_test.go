@@ -440,7 +440,7 @@ func TestCRUDRepository_Insert_Error(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestCRUDRepository_Update_Error(t *testing.T) {
+func TestCRUDRepository_Update_Success(t *testing.T) {
 	db := setupTestDB()
 	repo := crud.NewRepository[TestUser](db)
 	ctx := context.Background()
