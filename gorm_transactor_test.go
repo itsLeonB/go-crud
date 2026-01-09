@@ -226,12 +226,12 @@ func TestTransactor_Begin_Error(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTransactor_Commit_Error(t *testing.T) {
+func TestTransactor_Commit_WithoutTransaction(t *testing.T) {
 	db := setupTransactorTestDB(t)
 	transactor := crud.NewTransactor(db)
 	ctx := context.Background()
 
-	// Test committing without a transaction (should not error)
+	// Committing without a transaction should not error
 	err := transactor.Commit(ctx)
-	assert.NoError(t, err) // This is expected behavior
+	assert.NoError(t, err, "Commit without transaction should be a no-op")
 }
