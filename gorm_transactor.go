@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/itsLeonB/go-crud/internal"
+	"go.opentelemetry.io/otel"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +24,7 @@ type Transactor interface {
 // NewTransactor creates a new Transactor implementation using GORM.
 // The returned Transactor can be used to manage database transactions with context propagation.
 func NewTransactor(db *gorm.DB) Transactor {
-	return &internal.GormTransactor{DB: db}
+	return &internal.GormTransactor{DB: db, Tracer: otel.GetTracerProvider().Tracer(packageName)}
 }
 
 // GetTxFromContext retrieves the current GORM transaction from the context.
