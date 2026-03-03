@@ -6,14 +6,19 @@ import (
 
 	"github.com/itsLeonB/go-crud/lib"
 	"github.com/itsLeonB/ungerr"
+	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 )
 
 type GormTransactor struct {
-	DB *gorm.DB
+	DB     *gorm.DB
+	tracer trace.Tracer
 }
 
 func (t *GormTransactor) Begin(ctx context.Context) (context.Context, error) {
+	ctx, span := t.tracer.Start(ctx, "Transactor.Begin")
+	defer span.End()
+
 	tx := t.DB.WithContext(ctx).Begin()
 	if err := tx.Error; err != nil {
 		return nil, ungerr.Wrap(err, lib.MsgTransactionError)
@@ -23,6 +28,9 @@ func (t *GormTransactor) Begin(ctx context.Context) (context.Context, error) {
 }
 
 func (t *GormTransactor) Commit(ctx context.Context) error {
+	ctx, span := t.tracer.Start(ctx, "Transactor.Commit")
+	defer span.End()
+
 	tx, err := GetTxFromContext(ctx)
 	if err != nil {
 		return err
@@ -38,6 +46,9 @@ func (t *GormTransactor) Commit(ctx context.Context) error {
 }
 
 func (t *GormTransactor) Rollback(ctx context.Context) {
+	ctx, span := t.tracer.Start(ctx, "Transactor.Rollback")
+	defer span.End()
+
 	tx, err := GetTxFromContext(ctx)
 	if err != nil {
 		log.Println("rollback error:", err)
@@ -60,6 +71,9 @@ func (t *GormTransactor) Rollback(ctx context.Context) {
 }
 
 func (t *GormTransactor) WithinTransaction(ctx context.Context, serviceFn func(ctx context.Context) error) error {
+	ctx, span := t.tracer.Start(ctx, "Transactor.WithinTransaction")
+	defer span.End()
+
 	// Check if we're already within a transaction
 	existingTx, err := GetTxFromContext(ctx)
 	if err != nil {

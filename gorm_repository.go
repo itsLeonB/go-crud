@@ -2,9 +2,12 @@ package crud
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/itsLeonB/ungerr"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 )
 
@@ -47,15 +50,18 @@ func NewRepository[T any](db *gorm.DB) Repository[T] {
 	if typ := reflect.TypeOf(zero); typ != nil && typ.Kind() == reflect.Ptr {
 		panic("Repository does not support pointer types for T")
 	}
-	return &gormRepository[T]{db}
+	return &gormRepository[T]{db, otel.GetTracerProvider().Tracer(packageName)}
 }
 
 type gormRepository[T any] struct {
-	db *gorm.DB
+	db     *gorm.DB
+	tracer trace.Tracer
 }
 
 func (gr *gormRepository[T]) Insert(ctx context.Context, model T) (T, error) {
 	var zero T
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].Insert", zero))
+	defer span.End()
 
 	if err := gr.checkZeroValue(model); err != nil {
 		return zero, err
@@ -74,6 +80,10 @@ func (gr *gormRepository[T]) Insert(ctx context.Context, model T) (T, error) {
 }
 
 func (gr *gormRepository[T]) FindAll(ctx context.Context, spec Specification[T]) ([]T, error) {
+	var zero T
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].FindAll", zero))
+	defer span.End()
+
 	var models []T
 
 	db, err := gr.GetGormInstance(ctx)
@@ -99,6 +109,8 @@ func (gr *gormRepository[T]) FindAll(ctx context.Context, spec Specification[T])
 
 func (gr *gormRepository[T]) FindFirst(ctx context.Context, spec Specification[T]) (T, error) {
 	var model T
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].FindFirst", model))
+	defer span.End()
 
 	db, err := gr.GetGormInstance(ctx)
 	if err != nil {
@@ -126,6 +138,8 @@ func (gr *gormRepository[T]) FindFirst(ctx context.Context, spec Specification[T
 
 func (gr *gormRepository[T]) Update(ctx context.Context, model T) (T, error) {
 	var zero T
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].Update", zero))
+	defer span.End()
 
 	if err := gr.checkZeroValue(model); err != nil {
 		return zero, err
@@ -144,6 +158,9 @@ func (gr *gormRepository[T]) Update(ctx context.Context, model T) (T, error) {
 }
 
 func (gr *gormRepository[T]) Delete(ctx context.Context, model T) error {
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].Delete", model))
+	defer span.End()
+
 	if err := gr.checkZeroValue(model); err != nil {
 		return err
 	}
@@ -161,6 +178,10 @@ func (gr *gormRepository[T]) Delete(ctx context.Context, model T) error {
 }
 
 func (gr *gormRepository[T]) InsertMany(ctx context.Context, models []T) ([]T, error) {
+	var zero T
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].InsertMany", zero))
+	defer span.End()
+
 	if len(models) < 1 {
 		return nil, ungerr.Unknown("inserted models cannot be empty")
 	}
@@ -178,6 +199,10 @@ func (gr *gormRepository[T]) InsertMany(ctx context.Context, models []T) ([]T, e
 }
 
 func (gr *gormRepository[T]) DeleteMany(ctx context.Context, models []T) error {
+	var zero T
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].DeleteMany", zero))
+	defer span.End()
+
 	if len(models) < 1 {
 		return ungerr.Unknown("deleted models cannot be empty")
 	}
@@ -195,6 +220,10 @@ func (gr *gormRepository[T]) DeleteMany(ctx context.Context, models []T) error {
 }
 
 func (gr *gormRepository[T]) SaveMany(ctx context.Context, models []T) ([]T, error) {
+	var zero T
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].SaveMany", zero))
+	defer span.End()
+
 	if len(models) < 1 {
 		return nil, ungerr.Unknown("saved models cannot be empty")
 	}
@@ -220,6 +249,10 @@ func (gr *gormRepository[T]) checkZeroValue(model T) error {
 }
 
 func (gr *gormRepository[T]) GetGormInstance(ctx context.Context) (*gorm.DB, error) {
+	var zero T
+	ctx, span := gr.tracer.Start(ctx, fmt.Sprintf("Repository[%T].GetGormInstance", zero))
+	defer span.End()
+
 	tx, err := GetTxFromContext(ctx)
 	if err != nil {
 		return nil, err
